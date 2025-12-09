@@ -108,10 +108,13 @@ def main():
             all_right = []
             with torch.no_grad():
                 for batch in testloader:                                            # batch shape: (B, 2, 3, 112, 112)
-                    batch = batch.view(-1, 3, 112, 112).cuda(non_blocking=True)     # → (B*2, 3, 112, 112)
-                    embeddings = net(batch)                                         # → (B*2, 128)
-                    embeddings = F.normalize(embeddings, p=2, dim=1)                # L2 normalize
-                    left, right = embeddings.chunk(2, dim=0)                        # Split back into left/right
+                    B = batch.size(0)  # batch_size
+                    batch = batch.view(B*2, 3, 112, 112).cuda(non_blocking=True)
+                    embeddings = net(batch)
+                    embeddings = F.normalize(embeddings, p=2, dim=1)
+                    embeddings = embeddings.view(B, 2, -1)  # reshape back to (B, 2, 128)
+                    left = embeddings[:,0,:]
+                    right = embeddings[:,1,:]
                     all_left.append(left.cpu())
                     all_right.append(right.cpu())
             # Concatenate all
