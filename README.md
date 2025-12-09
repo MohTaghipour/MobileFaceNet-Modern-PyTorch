@@ -8,3 +8,9 @@ This version includes:
 - Debug fixes
 - New training utilities
 - Better modularization
+
+In order to train use this dataset:
+https://www.kaggle.com/datasets/ntl0601/casia-webface
+
+For test:
+https://www.kaggle.com/datasets/jessicali9530/lfw-dataset
