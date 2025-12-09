@@ -4,8 +4,6 @@ import numpy as np
 import cv2
 import scipy.io
 import csv
-import copy
-import core.model
 import os
 import torch.utils.data
 from core import model
@@ -58,7 +56,6 @@ def getAccuracy(scores, flags, threshold):
     n = np.sum(scores[flags == -1] < threshold)
     return 1.0 * (p + n) / len(scores)
 
-
 def getThreshold(scores, flags, thrNum):
     accuracys = np.zeros((2 * thrNum + 1, 1))
     thresholds = np.arange(-thrNum, thrNum + 1) * 1.0 / thrNum
@@ -68,29 +65,22 @@ def getThreshold(scores, flags, thrNum):
     bestThreshold = np.mean(thresholds[max_index])
     return bestThreshold
 
-
 def evaluation_10_fold(root='./result/pytorch_result.mat'):
     ACCs = np.zeros(10)
     result = scipy.io.loadmat(root)
+    featureLs = result['fl']
+    featureRs = result['fr']
+    fold = np.squeeze(result['fold']).astype(int)
+    flags = np.squeeze(result['flag']).astype(int)
+
     for i in range(10):
-        fold = result['fold']
-        flags = result['flag']
-        featureLs = result['fl']
-        featureRs = result['fr']
         valFold = fold != i
         testFold = fold == i
-        flags = np.squeeze(flags)
-        mu = np.mean(np.concatenate((featureLs[valFold[0], :], featureRs[valFold[0], :]), 0), 0)
-        mu = np.expand_dims(mu, 0)
-        featureLs = featureLs - mu
-        featureRs = featureRs - mu
-        featureLs = featureLs / np.expand_dims(np.sqrt(np.sum(np.power(featureLs, 2), 1)), 1)
-        featureRs = featureRs / np.expand_dims(np.sqrt(np.sum(np.power(featureRs, 2), 1)), 1)
-        scores = np.sum(np.multiply(featureLs, featureRs), 1)
-        threshold = getThreshold(scores[valFold[0]], flags[valFold[0]], 10000)
-        ACCs[i] = getAccuracy(scores[testFold[0]], flags[testFold[0]], threshold)
+        scores = np.sum(featureLs * featureRs, axis=1)
+        scores = np.clip(scores, -1.0, 1.0)
+        threshold = getThreshold(scores[valFold], flags[valFold], 10000)
+        ACCs[i] = getAccuracy(scores[testFold], flags[testFold], threshold)
     return ACCs
-
 
 def getFeatureFromTorch(lfw_dir, feature_save_dir, resume=None, gpu=True):
     net = model.MobileFacenet()
@@ -125,8 +115,6 @@ def getFeatureFromTorch(lfw_dir, feature_save_dir, resume=None, gpu=True):
             featureRs = featureR
         else:
             featureRs = np.concatenate((featureRs, featureR), 0)
-        # featureLs.append(featureL)
-        # featureRs.append(featureR)
 
     result = {'fl': featureLs, 'fr': featureRs, 'fold': flods, 'flag': flags}
     scipy.io.savemat(feature_save_dir, result)
@@ -139,7 +127,6 @@ if __name__ == '__main__':
     parser.add_argument('--feature_save_dir', type=str, default='./result/best_result.mat',
                         help='The path of the extract features save, must be .mat file')
     args = parser.parse_args()
-
     getFeatureFromTorch(args.lfw_dir, args.feature_save_dir, args.resume)
     ACCs = evaluation_10_fold(args.feature_save_dir)
     for i in range(len(ACCs)):
