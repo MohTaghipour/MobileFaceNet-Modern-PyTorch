@@ -66,7 +66,7 @@ def main():
         {'params': prelu_params, 'weight_decay': 0.0}
     ], lr=0.1, momentum=0.9, nesterov=True)
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer_ft, milestones=[36, 52, 58],  gamma=0.1, ast_epoch=-1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer_ft, milestones=[36, 52, 58],  gamma=0.1, last_epoch=-1)
     if multi_gpus:
         net = DataParallel(net)
         ArcMargin = DataParallel(ArcMargin)
