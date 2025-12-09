@@ -3,6 +3,7 @@ from torch import nn
 import torch
 import torch.nn.functional as F
 from torch.nn import Parameter
+from config import FINAL_EMBEDDING_SIZE
 
 class ConvBlock(nn.Module):
     def __init__(self, inp, oup, k, s, p, dw=False, linear=False):
@@ -71,8 +72,8 @@ class MobileFacenet(nn.Module):
         block = Bottleneck
         self.blocks = self._make_layer(block, bottleneck_setting)
         self.conv2 = ConvBlock(128, 512, 1, 1, 0)
-        self.linear7 = ConvBlock(512, 512, (7, 6), 1, 0, dw=True, linear=True)
-        self.linear1 = ConvBlock(512, 128, 1, 1, 0, linear=True)
+        self.linear7 = ConvBlock(512, 512, (7, 7), 1, 0, dw=True, linear=True)
+        self.linear1 = ConvBlock(512, FINAL_EMBEDDING_SIZE, 1, 1, 0, linear=True)
         # Weight initialization
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
