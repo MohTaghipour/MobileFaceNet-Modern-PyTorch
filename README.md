@@ -47,4 +47,4 @@ _Batch 61/3596 (1.7%)_
 
 etc.
 
-# The progress updates will continue for all batches in each epoch.
+### The progress updates will continue for all batches in each epoch.
